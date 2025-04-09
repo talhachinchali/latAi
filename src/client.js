@@ -1,27 +1,34 @@
-import { ApolloClient, InMemoryCache, HttpLink, split } from '@apollo/client';
+import { ApolloClient, InMemoryCache, HttpLink, split, setContext } from '@apollo/client';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
 import { getMainDefinition } from '@apollo/client/utilities';
+
+// Create the auth link
+const authLink = setContext((_, { headers }) => {
+  const token = localStorage.getItem('token');
+  return {
+    headers: {
+      ...headers,
+      'Content-Type': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : "",
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Credentials': 'true'
+    }
+  };
+});
 
 // Create an HTTP link for queries and mutations
 const httpLink = new HttpLink({
   uri: import.meta.env.VITE_BACKEND_URL,
   credentials: 'include',  // Important for cookies
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${localStorage.getItem('token')}` ,// Add token from localStorage
-    'Access-Control-Allow-Origin': '*',  // Add this for CORS
-    'Access-Control-Allow-Credentials': 'true' 
-  }
 });
-
 
 // Create a WebSocket link for subscriptions using graphql-ws
 const wsLink = new GraphQLWsLink(createClient({
   url: import.meta.env.VITE_BACKEND_WS_URL,
 }));
 
-// Use split to send data to each link based on operation type
+// Combine the auth link with the http link
 const splitLink = split(
   ({ query }) => {
     const definition = getMainDefinition(query);
@@ -31,7 +38,7 @@ const splitLink = split(
     );
   },
   wsLink,
-  httpLink,
+  authLink.concat(httpLink), // Use authLink with httpLink
 );
 
 const client = new ApolloClient({
