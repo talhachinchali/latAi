@@ -1,8 +1,8 @@
-import { ApolloClient, InMemoryCache, HttpLink, split, setContext } from '@apollo/client';
+import { ApolloClient, InMemoryCache, HttpLink, split } from '@apollo/client';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
 import { getMainDefinition } from '@apollo/client/utilities';
-
+import { setContext } from '@apollo/client/link/context'; 
 // Create the auth link
 const authLink = setContext((_, { headers }) => {
   const token = localStorage.getItem('token');
