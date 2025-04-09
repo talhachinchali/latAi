@@ -1,0 +1,17 @@
+.scrollbar-hide::-webkit-scrollbar {
+    width: 8px; /* Adjust the width as needed */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar-thumb {
+    background-color: #888; /* Color of the scrollbar */
+    border-radius: 10px; /* Rounded corners */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar-track {
+    background: transparent; /* Make the track transparent */
+  }
+  .svg-white {
+    fill: white;
+  }
+
+  
