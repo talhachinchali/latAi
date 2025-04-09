@@ -20,6 +20,7 @@ export function useWebContainer() {
                     console.log("webcontainer setted succesfully")
                 }) 
                 .catch((err) => {
+                       console.log("error in webcontainer",err);
                     setError(err instanceof Error ? err : new Error("Failed to boot WebContainer"));
                 });
         }
