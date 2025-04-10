@@ -10,7 +10,7 @@ import { InsertDriveFileOutlined } from '@mui/icons-material';
 import { Avatar, Skeleton } from '@mui/material';
 import { useUser } from '../UserProvider';
 
-function Steps({steps,setViewMode,getAIResponse,files,setActivePrompt,setPromptId,userPromptsList,setUserPromptsList,activeImage,setActiveImage,activePrompt,isLoadingApi,setIsLoadingApi,promptId}) {
+function Steps({steps,setViewMode,getAIResponse,files,setActivePrompt,setPromptId,userPromptsList,setUserPromptsList,activeImage,setActiveImage,activePrompt,isLoadingApi,setIsLoadingApi,promptId,mainTitle,setMainTitle}) {
   const user = JSON.parse(localStorage.getItem('user'));
   const [prompt, setPrompt] = useState('');
   const [fileContent, setFileContent] = useState('');
@@ -127,6 +127,11 @@ useEffect(()=>{
     const groups = {};
     
     steps.forEach(step => {
+      if(step.type==="title"){
+        if(!mainTitle){
+          setMainTitle(step.title);
+        }
+      }
       const promptId = step.promptId || 'undefined'; // Handle steps without promptId
       if (!groups[promptId]) {
         groups[promptId] = [];

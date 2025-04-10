@@ -55,6 +55,10 @@ function Workspace() {
   const location = useLocation();
   const apiKey=localStorage.getItem('geminiApiKey');
   console.log("apiKey omg",apiKey)
+  const [mainTitle,setMainTitle]=useState("");
+  useEffect(()=>{
+    console.log("mainTitle changed",mainTitle)
+  },[mainTitle])
   const { prompt, sessionId,firstPageImage } = location.state || { prompt: '', sessionId: '123',firstPageImage:'' };
   const [isInitializedServer, setIsInitializedServer] = useState(false);
   const [url, setUrl] = useState(null);
@@ -1062,9 +1066,15 @@ const handleChange=async()=>{
     <div class="_RayContainer_1ti3k_1" data-theme="dark" data-chat-started="true"><div class="_LightRay_1ti3k_23 _RayOne_1ti3k_28"></div><div class="_LightRay_1ti3k_23 _RayTwo_1ti3k_36"></div><div class="_LightRay_1ti3k_23 _RayThree_1ti3k_46"></div><div class="_LightRay_1ti3k_23 _RayFour_1ti3k_55"></div><div class="_LightRay_1ti3k_23 _RayFive_1ti3k_65"></div></div>
     <div className="w-[100vw] flex h-screen bg-black ">
       {/* Steps Panel */}
+      <div className="w-[100%] h-[10%] flex items-center justify-center p-2 pl-5" style={{color:'white',fontSize:"10px"}}>
+         <p className=" p-2  rounded-full flex items-center gap-2 text-center text-lg font-bold">{mainTitle}</p>
+         </div>
       <div className="w-[48%] min-w-[400px] h-[90%] absolute bottom-0 left-0 p-2 bg-[transparent] overflow-y-hidden scrollbar-hide">
    
-      <Steps steps={steps} setViewMode={setViewMode} getAIResponse={getAIResponse} files={files} setFiles={setFiles} setActivePrompt={setActivePrompt} setPromptId={setPromptId} userPromptsList={userPromptsList} setUserPromptsList={setUserPromptsList} activeImage={activeImage} setActiveImage={setActiveImage} activePrompt={activePrompt} isLoadingApi={isLoadingApi} setIsLoadingApi={setIsLoadingApi} promptId={promptId} />
+      <Steps steps={steps} setViewMode={setViewMode} getAIResponse={getAIResponse} files={files} setFiles={setFiles} setActivePrompt={setActivePrompt} setPromptId={setPromptId} userPromptsList={userPromptsList} setUserPromptsList={setUserPromptsList} activeImage={activeImage} setActiveImage={setActiveImage} 
+      activePrompt={activePrompt} isLoadingApi={isLoadingApi} setIsLoadingApi={setIsLoadingApi} promptId={promptId} 
+      mainTitle={mainTitle} setMainTitle={setMainTitle}
+      />
       </div>
       <div 
         onClick={toggleCodePanel}

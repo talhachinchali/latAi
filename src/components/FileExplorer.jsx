@@ -88,7 +88,7 @@ function FileExplorer({ onFileSelect, files, setFiles, selectedFile }) {
             key={fullPath}
             className="flex w-[fit-content] ms-center gap-1 px-2 py-1 hover:bg-gray-800 cursor-pointer items-center"
             onClick={() => onFileSelect({ name, path: fullPath, content: node.content })}
-            style={{ backgroundColor: selectedFile?.path === fullPath ? 'red' : 'transparent' }}
+            style={{ backgroundColor: selectedFile?.path === fullPath ? 'black' : 'transparent' }}
           >
             {/* <span className="invisible"><KeyboardArrowRightIcon fontSize="small" /></span> */}
            {getFileIcon(name, 'file')}

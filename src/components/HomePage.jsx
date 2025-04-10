@@ -15,6 +15,7 @@ import TextField from '@mui/material/TextField';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import logo from '../assets/onemorelogo.png';
 
 import { gql } from '@apollo/client';
 import { Skeleton } from '@mui/material';
@@ -253,7 +254,8 @@ function HomePage() {
   return (
     <>
     <div className='w-screen p-5  bg-transparent absolute top-0 left-0 z-10 text-white flex justify-between items-center'>
-      <p className='text-xl  font-bold'>LatAi</p>
+      {/* <p className='text-xl  font-bold'>LatAi</p> */}
+      <img src={logo} alt='logo' className='w-[100px]' />
       <div className='flex justify-between items-center'>
         <button 
           onClick={handleOpenApiKeyModal}
