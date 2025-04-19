@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, gql, useLazyQuery, useSubscription } from '@apollo/client';
 import FileExplorer from './FileExplorer';
 import parseXMLContent from './xmlParser';
@@ -67,11 +67,25 @@ function Workspace() {
     console.log("url channged",url)
   },[url])
   const [promptId,setPromptId]=useState(1);
+  const navigate=useNavigate();
   // Add GraphQL query
   const { loading, error, data } = useQuery(GET_TEMPLATE, {
     variables: { prompt,apiKey },
     skip: !prompt // Skip the query if there's no prompt
   });
+
+  useEffect(() => {
+    if (error) {
+      const statusCode = error.networkError?.statusCode;
+  
+      if (statusCode === 401) {
+        localStorage.clear();
+        navigate('/');
+      } else {
+        console.error("GraphQL error:", error);
+      }
+    }
+  }, [error, navigate]);
   const [isLoadingApi,setIsLoadingApi]=useState(true);
 
   // Add lazy query hook
@@ -121,7 +135,7 @@ function Workspace() {
       image:messageSent?activeImage:firstPageImage,
       apiKey:apiKey
     },
-    skip: messageSent && !activePrompt,
+    skip: (messageSent && !activePrompt)||!localStorage.getItem('token'),
     onData: ({ data }) => {
       if (data?.data?.aiResponse) {
         setIsLoadingApi(false);
@@ -484,6 +498,7 @@ addStep({
   
       // Optional: Trigger AI response here if needed
     }
+   
   }, [data, prompt, getAIResponse]);
 
   useEffect(() => {
