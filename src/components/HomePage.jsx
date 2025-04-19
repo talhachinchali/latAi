@@ -127,14 +127,14 @@ function HomePage() {
 
   const handleLogout = async () => {
     try {
-      const { data } = await logout();
-      console.log(data);
-      if (data?.logout) {
+      // const { data } = await logout();
+      // console.log(data);
+      // if (data?.logout) {
         // Clear local storage
         localStorage.clear();
         // Refresh the page or update UI state
         // window.location.reload();
-      }
+      // }
     } catch (error) {
       console.error('Logout error:', error);
     }
