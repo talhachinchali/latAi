@@ -410,20 +410,25 @@ addStep({
     
     }
   });
+  const { webcontainer, error: webcontainerError } = useWebContainer();
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Update prompts and messages when data is received
   useEffect(() => {
     if (data?.template) {
       setPrompts(data.template.prompts);
       setUiPrompts(data.template.uiPrompts);
+  
       let uiPromptsdecoded = parseXMLContent(data.template.uiPrompts[0]);
-      
+  
       // Transform the decoded files into the required structure
       const newFiles = {};
+      const writeFilesToWebContainer = [];
+  
       uiPromptsdecoded.forEach(file => {
         const pathParts = file.path.split('/');
         let current = newFiles;
-        
+  
         // Create nested folder structure
         for (let i = 0; i < pathParts.length - 1; i++) {
           const part = pathParts[i];
@@ -435,34 +440,49 @@ addStep({
           }
           current = current[part].children;
         }
-        
+  
         // Add the file
         const fileName = pathParts[pathParts.length - 1];
         current[fileName] = {
           type: 'file',
           content: file.content
         };
+  
+        // Prepare to write file to WebContainer
+        writeFilesToWebContainer.push({ path: file.path, content: file.content });
       });
-
+  
       setFiles(newFiles);
-
+  
+      // Write each file into WebContainer FS
+      const writeToWebContainer = async () => {
+        if (webcontainer && isInitialized) {
+          for (const file of writeFilesToWebContainer) {
+            try {
+              const folder = file.path.split('/').slice(0, -1).join('/');
+              if (folder !== '') {
+                await webcontainer.fs.mkdir(folder, { recursive: true });
+              }
+              await webcontainer.fs.writeFile(file.path, file.content);
+              console.log(`✅ Wrote: ${file.path}`);
+            } catch (err) {
+              console.error(`❌ Failed to write: ${file.path}`, err);
+            }
+          }
+        }
+      };
+  
+      writeToWebContainer();
+  
+      // Set initial messages
       const newMessages = [
         data.template.prompts[0],
         data.template.uiPrompts[0],
-        prompt+" if its frontend project give only .tsx extension otherwise give whatever you want"
+        prompt + " if its frontend project give only .tsx extension otherwise give whatever you want"
       ];
-      
       setMessages(newMessages);
-
-      // Call askAi query with the messages
-      // getAIResponse({
-      //   variables: {
-      //     prompt: prompt ,
-      //     sessionId: "123",
-      //     messages: newMessages
-      //   }
-      // });
-      // setActivePrompt(prompt); // Set active prompt to trigger subscription
+  
+      // Optional: Trigger AI response here if needed
     }
   }, [data, prompt, getAIResponse]);
 
@@ -809,8 +829,7 @@ editor.addCommand(monaco.KeyCode.Tab, () => {
   // useEffect(()=>{
   //   console.log(cursorPositionRef.current,"cursorPosition++++++++++++++++++++++");
   // },[cursorPositionRef.current])
-  const { webcontainer, error: webcontainerError } = useWebContainer();
-  const [isInitialized, setIsInitialized] = useState(false);
+ 
 
   // Split into two separate effects - one for initialization, one for file mounting
   useEffect(() => {
