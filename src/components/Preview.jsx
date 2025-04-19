@@ -229,6 +229,7 @@ function Preview({ webContainerInstance, isInitializedServer, setIsInitializedSe
             //             }} >
             <iframe
               src={url}
+               allow="geolocation; cross-origin-isolated; screen-wake-lock; publickey-credentials-get; shared-storage-select-url; bluetooth; compute-pressure; usb; publickey-credentials-create; shared-storage; run-ad-auction; payment; autoplay; camera; private-state-token-issuance; accelerometer; idle-detection; private-aggregation; interest-cohort; local-fonts; midi; clipboard-read; gamepad; display-capture; keyboard-map; join-ad-interest-group; browsing-topics; encrypted-media; gyroscope; serial; unload; attribution-reporting; fullscreen; identity-credentials-get; private-state-token-redemption; hid; storage-access; sync-xhr; picture-in-picture; magnetometer; clipboard-write; microphone"
               style={{ width: '100%', height: '100%' }}
               // onLoad={handleIframeLoad}
             />

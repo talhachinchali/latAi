@@ -523,7 +523,7 @@ addStep({
     console.log(steps,"steps changed");
   },[steps])
 
-  function updateFileContent(path, newContent) {
+  const updateFileContent = async (path, newContent) =>{
     console.log("path", path);
   
     setFiles(prevFiles => {
@@ -557,6 +557,21 @@ addStep({
         ...prevSelectedFile,
         content: newContent
       }));
+    }
+    if (webcontainer && isInitialized) {
+      try {
+        // Create directory if needed
+        const folder = path.split('/').slice(0, -1).join('/');
+        if (folder !== '') {
+          await webcontainer.fs.mkdir(folder, { recursive: true });
+        }
+  
+        // Write the file
+        await webcontainer.fs.writeFile(path, newContent);
+        console.log(`File written successfully: ${path}`);
+      } catch (error) {
+        console.error('Failed to write file:', error);
+      }
     }
   }
 
@@ -832,10 +847,10 @@ editor.addCommand(monaco.KeyCode.Tab, () => {
 const handleChange=async()=>{
   if (webcontainer && isInitialized && files) {
     //   console.log("Mounting updated files",files);
-      const webContainerFiles = convertFilesToWebContainerFormat(files);
-     await webcontainer.mount(webContainerFiles).then(() => {
-        console.log('Files mounted successfully',webContainerFiles);
-      });
+    //   const webContainerFiles = convertFilesToWebContainerFormat(files);
+    //  await webcontainer.mount(webContainerFiles).then(() => {
+    //     console.log('Files mounted successfully',webContainerFiles);
+    //   });
     
 // const watcher =  await webcontainer.fs.watch('/');
 
