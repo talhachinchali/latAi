@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, gql, useLazyQuery, useSubscription } from '@apollo/client';
 import FileExplorer from './FileExplorer';
+import logo from '../assets/onemorelogo.png';
 import parseXMLContent from './xmlParser';
 import { KeyboardArrowRight } from '@mui/icons-material';
 import { KeyboardArrowLeft } from '@mui/icons-material';
@@ -21,6 +22,7 @@ import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import { inspectorScript } from './inspectorScript';
 
 const GET_TEMPLATE = gql`
   query GetTemplate($prompt: String!,$apiKey: String) {
@@ -54,11 +56,10 @@ const artifactStartRegex = /<boltArtifact\s+id="([^"]*)"\s+title="([^"]*)">/;
 function Workspace() {
   const location = useLocation();
   const apiKey=localStorage.getItem('geminiApiKey');
+  const [clickedElement,setClickedElement]=useState([]);
   console.log("apiKey omg",apiKey)
   const [mainTitle,setMainTitle]=useState("");
-  useEffect(()=>{
-    console.log("mainTitle changed",mainTitle)
-  },[mainTitle])
+ 
   const { prompt, sessionId,firstPageImage } = location.state || { prompt: '', sessionId: '123',firstPageImage:'' };
   const [isInitializedServer, setIsInitializedServer] = useState(false);
   const [url, setUrl] = useState(null);
@@ -429,7 +430,7 @@ addStep({
 
   // Update prompts and messages when data is received
   useEffect(() => {
-    if (data?.template) {
+    if (data?.template&&webcontainer) {
       setPrompts(data.template.prompts);
       setUiPrompts(data.template.uiPrompts);
   
@@ -465,19 +466,35 @@ addStep({
         // Prepare to write file to WebContainer
         writeFilesToWebContainer.push({ path: file.path, content: file.content });
       });
+      console.log(writeFilesToWebContainer,"writeFilesToWebContainer")
   
       setFiles(newFiles);
   
       // Write each file into WebContainer FS
       const writeToWebContainer = async () => {
-        if (webcontainer && isInitialized) {
+        if (webcontainer ) {
           for (const file of writeFilesToWebContainer) {
             try {
               const folder = file.path.split('/').slice(0, -1).join('/');
               if (folder !== '') {
                 await webcontainer.fs.mkdir(folder, { recursive: true });
               }
-              await webcontainer.fs.writeFile(file.path, file.content);
+
+              // If this is index.html, add the inspector script
+              let contentToWrite = file.content;
+              if (file.path === 'index.html') {
+                
+                
+                // Add the script before the closing body tag if it exists
+                if (file.content.includes('</body>')) {
+                  contentToWrite = file.content.replace('</body>', `${inspectorScript}</body>`);
+                } else {
+                  // If no body tag, append the script at the end
+                  contentToWrite = file.content + inspectorScript;
+                }
+              }
+
+              await webcontainer.fs.writeFile(file.path, contentToWrite);
               console.log(`✅ Wrote: ${file.path}`);
             } catch (err) {
               console.error(`❌ Failed to write: ${file.path}`, err);
@@ -494,12 +511,14 @@ addStep({
         data.template.uiPrompts[0],
         prompt + " if its frontend project give only .tsx extension otherwise give whatever you want"
       ];
-      setMessages(newMessages);
+      if(webcontainer){
+        setMessages(newMessages);
+      }
   
       // Optional: Trigger AI response here if needed
     }
    
-  }, [data, prompt, getAIResponse]);
+  }, [data, prompt,webcontainer]);
 
   useEffect(() => {
     if (suggestionsData) {
@@ -601,8 +620,22 @@ addStep({
           await webcontainer.fs.mkdir(folder, { recursive: true });
         }
   
+        // If this is index.html, add the inspector script
+        let contentToWrite = newContent;
+        if (path === 'index.html') {
+      
+          
+          // Add the script before the closing body tag if it exists
+          if (newContent.includes('</body>')) {
+            contentToWrite = newContent.replace('</body>', `${inspectorScript}</body>`);
+          } else {
+            // If no body tag, append the script at the end
+            contentToWrite = newContent + inspectorScript;
+          }
+        }
+  
         // Write the file
-        await webcontainer.fs.writeFile(path, newContent);
+        await webcontainer.fs.writeFile(path, contentToWrite);
         console.log(`File written successfully: ${path}`);
       } catch (error) {
         console.error('Failed to write file:', error);
@@ -1115,14 +1148,18 @@ const handleChange=async()=>{
     <div class="_RayContainer_1ti3k_1" data-theme="dark" data-chat-started="true"><div class="_LightRay_1ti3k_23 _RayOne_1ti3k_28"></div><div class="_LightRay_1ti3k_23 _RayTwo_1ti3k_36"></div><div class="_LightRay_1ti3k_23 _RayThree_1ti3k_46"></div><div class="_LightRay_1ti3k_23 _RayFour_1ti3k_55"></div><div class="_LightRay_1ti3k_23 _RayFive_1ti3k_65"></div></div>
     <div className="w-[100vw] flex h-screen bg-black ">
       {/* Steps Panel */}
-      <div className="w-[100%] h-[10%] flex items-center justify-center p-2 pl-5" style={{color:'white',fontSize:"10px"}}>
+      <div className="w-[100%] h-[10%] flex items-center justify-start p-2 pl-5" style={{color:'white',fontSize:"10px",backdropFilter:"blur(20px)",borderBottom:"1px solid #262626"}}>
+        <div className="flex items-center justify-between gap-2 w-[55%]"> 
+          <img src={logo} alt="logo" className="w-[80px]  " />
          <p className=" p-2  rounded-full flex items-center gap-2 text-center text-lg font-bold">{mainTitle}</p>
-         </div>
+        </div>
+        </div>
       <div className="w-[48%] min-w-[400px] h-[90%] absolute bottom-0 left-0 p-2 bg-[transparent] overflow-y-hidden scrollbar-hide">
    
       <Steps steps={steps} setViewMode={setViewMode} getAIResponse={getAIResponse} files={files} setFiles={setFiles} setActivePrompt={setActivePrompt} setPromptId={setPromptId} userPromptsList={userPromptsList} setUserPromptsList={setUserPromptsList} activeImage={activeImage} setActiveImage={setActiveImage} 
       activePrompt={activePrompt} isLoadingApi={isLoadingApi} setIsLoadingApi={setIsLoadingApi} promptId={promptId} 
       mainTitle={mainTitle} setMainTitle={setMainTitle}
+      clickedElement={clickedElement} setClickedElement={setClickedElement}
       />
       </div>
       <div 
@@ -1252,7 +1289,7 @@ const handleChange=async()=>{
                         <p>Select a file to view its contents</p>
                     )
                 ) : (
-                    <Preview webContainerInstance={webcontainer} isInitializedServer={isInitializedServer} setIsInitializedServer={setIsInitializedServer} url={url} setUrl={setUrl} tempUrl={tempUrl} setTempUrl={setTempUrl} />
+                    <Preview webContainerInstance={webcontainer} isInitializedServer={isInitializedServer} setIsInitializedServer={setIsInitializedServer} url={url} setUrl={setUrl} tempUrl={tempUrl} setTempUrl={setTempUrl} clickedElement={clickedElement} setClickedElement={setClickedElement} />
                 )}
             </div>
           

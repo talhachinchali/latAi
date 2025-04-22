@@ -4,134 +4,57 @@ import MaximizeIcon from '@mui/icons-material/Maximize';
 import MinimizeIcon from '@mui/icons-material/Minimize';
 import AspectRatioIcon from '@mui/icons-material/AspectRatio';
 import { Inspector } from 'react-dev-inspector';
+import HighlightAltIcon from '@mui/icons-material/HighlightAlt';
+import { Tooltip } from '@mui/material';
 
-function Preview({ webContainerInstance, isInitializedServer, setIsInitializedServer, url, setUrl, tempUrl, setTempUrl }) {
+function Preview({ webContainerInstance, isInitializedServer, setIsInitializedServer, url, setUrl, tempUrl, setTempUrl, clickedElement, setClickedElement }) {
  const [basePath,setBasePath]=useState('/');
  const [isMaximized, setIsMaximized] = useState(false);
  const [isInspectMode, setIsInspectMode] = useState(false);
  const [isLoading,setIsLoading]=useState(false);
+ const iframeRef=useRef(null);
+ const mouseMoveListenerRef = useRef(null);
+ const [isInspectorMode, setIsInspectorMode] = useState(false);
+ useEffect(() => {
+  if (iframeRef.current && iframeRef.current.contentWindow) {
+    iframeRef.current.contentWindow.postMessage({
+      type: 'set-inspector-mode',
+      enabled: isInspectorMode
+    }, '*');
+  }
+}, [url,isInspectorMode]);
+
+// Add this to your parent component's useEffect
+useEffect(() => {
+  const handleMessage = (event) => {
+    if (event.data?.type === 'element-clicked') {
+      // console.log('Element clicked in iframe:', event.data);
+       setClickedElement(prev => {
+      // Optional: prevent duplicates
+      if (prev.some(el => el.outerHTML === event.data.outerHTML)) {
+        return prev;
+      }
+      return [...prev, event.data];
+    });
+      // You can now access all the element properties:
+      // event.data.tagName, event.data.className, etc.
+    }
+  };
+
+  window.addEventListener('message', handleMessage);
+
+  return () => {
+    window.removeEventListener('message', handleMessage);
+  };
+}, []);
+
 
   const typingTimeoutRef = useRef(null);
   let devProcessRef = null;
 
-  // useEffect(() => {
-  
-
-  //   async function main() {
-  //     console.log("main function called", isInitializedServer);
-  //     if (isInitializedServer) return;
-
-  //     // Kill any existing dev process before starting a new one
-  //     // if (devProcessRef) {
-  //     //   try {
-  //     //     await webContainerInstance.kill(devProcessRef.pid);
-  //     //     console.log('Killed previous dev process');
-  //     //   } catch (err) {
-  //     //     console.error('Failed to kill previous process:', err);
-  //     //   }
-  //     // }
-
-  //     const installProcess = await webContainerInstance.spawn('npm', ['i', '--force']);
-  //     installProcess.output.pipeTo(new WritableStream({
-  //       write(data) {
-  //         console.log('Installation:', data);
-  //       }
-  //     }));
-  //     let installExitCode = await installProcess.exit;
-
-  //     if (installExitCode !== 0) {
-  //       console.error('Installation failed, retrying with --legacy-peer-deps');
-  //       const retryInstallProcess = await webContainerInstance.spawn('npm', ['i', '--legacy-peer-deps']);
-  //       retryInstallProcess.output.pipeTo(new WritableStream({
-  //         write(data) {
-  //           console.log('Retry Installation:', data);
-  //         }
-  //       }));
-  //       installExitCode = await retryInstallProcess.exit;
-
-  //       if (installExitCode !== 0) {
-  //         console.error('Retry installation failed');
-  //         return;
-  //       }
-  //     }
-
-  //     const devProcess = await webContainerInstance.spawn('npm', ['run', 'dev']);
-  //     // Store reference to the current dev process
-  //     devProcess.output.pipeTo(new WritableStream({
-  //       write(data) {
-  //         console.log('Dev server output:', data);
-  //       }
-  //     }));
-  //     devProcessRef = devProcess;
-  //     // devProcessRef = devProcess;
-      
-  //     // devProcess.output.pipeTo(new WritableStream({
-  //     //   write(data) {
-  //     //     console.log('Dev server output:', data);
-  //     //   }
-  //     // }));
-      
-  //     // Monitor for dev process exit
-  //     // devProcess.exit.then(code => {
-  //     //   console.log(`Dev server exited with code ${code}`);
-  //     //   if (code !== 0 && isInitializedServer) {
-  //     //     setIsInitializedServer(false);
-  //     //     setUrl('');
-  //     //     devProcessRef = null;
-  //     //   }
-  //     // });
-
-  //     setIsInitializedServer(true);
-
-  //     const handleServerReady = (port, url) => {
-  //       console.log('Server ready URL:', url, port);
-  //       setUrl(url);
-  //       setTempUrl(url);
-
-  //     };
-
-  //     webContainerInstance.on('server-ready', handleServerReady);
-  //   }
-
-  //   if (webContainerInstance) {
-  //     main();
-  //   }
-
-  //   // Cleanup function to kill processes when unmounting
-  //   // return () => {
-  //   //   if (webContainerInstance && devProcessRef) {
-  //   //     try {
-  //   //       webContainerInstance.kill(devProcessRef.pid);
-  //   //       console.log('Cleaned up dev process on unmount');
-  //   //     } catch (err) {
-  //   //       console.error('Error killing process on unmount:', err);
-  //   //     }
-  //   //   }
-      
-  //   //   if (webContainerInstance && webContainerInstance.off) {
-  //   //     webContainerInstance.off('server-ready');
-  //   //   }
-  //   // };
-
-  // }, [webContainerInstance, isInitializedServer]);
-
-  // useEffect(() => {
-  //   if (isInitializedServer && !url) {
-  //     const handleServerReady = (port, url) => {
-  //       console.log("this is calling 2");
-  //       setUrl(url);
-  //     };
-
-  //     webContainerInstance.on('server-ready', handleServerReady);
-
-  //     // Cleanup function to remove event listeners
-  //     return () => {
-  //       // If there's no 'off' method, ensure listeners are not added multiple times
-  //       // You might need to check if the API provides another way to remove listeners
-  //     };
-  //   }
-  // }, [isInitializedServer, url, webContainerInstance, setUrl]);
-
+const toggleInspectorMode = () => {
+  setIsInspectorMode(!isInspectorMode);
+};
   const handleUrlChange = (event) => {
     const newBasePath = event.target.value;
     setBasePath(newBasePath);
@@ -211,12 +134,28 @@ function Preview({ webContainerInstance, isInitializedServer, setIsInitializedSe
             placeholder="Enter URL"
             style={{ width: '80%', padding: '15px', borderRadius: '100px', height: '20px', background: 'black', color: '#A3A3A3' }}
           />
+        <Tooltip title="Inspector" arrow>
+  <button 
+    onClick={toggleInspectorMode}
+    style={{
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      padding: '8px',
+      margin: '0 5px'
+    }}
+  >
+    {isInspectorMode ? (
+      <HighlightAltIcon style={{ color: 'blue' }} />
+    ) : (
+      <HighlightAltIcon style={{ color: 'grey' }} />
+    )}
+  </button>
+</Tooltip>
            <button onClick={toggleMaximize} style={{ marginLeft: '10px', marginRight: '10px' }}>
  <AspectRatioIcon style={{ color: 'grey' }} /> 
           </button>
-          {/* <button onClick={() => setIsInspectMode(!isInspectMode)} style={{ marginLeft: '10px', marginRight: '10px' }}>
-            {isInspectMode ? 'Disable Inspect' : 'Enable Inspect'}
-          </button> */}
+         
         </div>
         <div style={{ width: '100%', height: 'calc(100% - 50px)' }}>
           {url&& !isLoading && (
@@ -229,6 +168,8 @@ function Preview({ webContainerInstance, isInitializedServer, setIsInitializedSe
             //             }} >
             <iframe
               src={url}
+              ref={iframeRef}
+              // onLoad={handleIframeLoad}
                allow="geolocation; cross-origin-isolated; screen-wake-lock; publickey-credentials-get; shared-storage-select-url; bluetooth; compute-pressure; usb; publickey-credentials-create; shared-storage; run-ad-auction; payment; autoplay; camera; private-state-token-issuance; accelerometer; idle-detection; private-aggregation; interest-cohort; local-fonts; midi; clipboard-read; gamepad; display-capture; keyboard-map; join-ad-interest-group; browsing-topics; encrypted-media; gyroscope; serial; unload; attribution-reporting; fullscreen; identity-credentials-get; private-state-token-redemption; hid; storage-access; sync-xhr; picture-in-picture; magnetometer; clipboard-write; microphone"
               style={{ width: '100%', height: '100%' }}
               // onLoad={handleIframeLoad}

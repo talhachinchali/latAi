@@ -10,7 +10,7 @@ import { InsertDriveFileOutlined } from '@mui/icons-material';
 import { Avatar, Skeleton } from '@mui/material';
 import { useUser } from '../UserProvider';
 
-function Steps({steps,setViewMode,getAIResponse,files,setActivePrompt,setPromptId,userPromptsList,setUserPromptsList,activeImage,setActiveImage,activePrompt,isLoadingApi,setIsLoadingApi,promptId,mainTitle,setMainTitle}) {
+function Steps({steps,setViewMode,getAIResponse,files,setActivePrompt,setPromptId,userPromptsList,setUserPromptsList,activeImage,setActiveImage,activePrompt,isLoadingApi,setIsLoadingApi,promptId,mainTitle,setMainTitle,clickedElement,setClickedElement}) {
   const user = JSON.parse(localStorage.getItem('user'));
   const [prompt, setPrompt] = useState('');
   const [fileContent, setFileContent] = useState('');
@@ -48,10 +48,16 @@ useEffect(()=>{
     setPromptId(prevPromptId => prevPromptId + 1);
     setUserPromptsList([...userPromptsList, prompt]);
 
-    if(selectedFileName){
+     if(selectedFileName && clickedElement && clickedElement.length > 0) {
+      const elementDetails = clickedElement.map(el => el.outerHTML).join('\n');
+      fullPrompt = `fileName:${selectedFileName}\n${fileContent}\nSelected elements:\n${elementDetails}\n${prompt}\nPlease modify these elements in the specified file`;
+    } else if(selectedFileName) {
       fullPrompt = "fileName:"+selectedFileName+"\n"+fileContent + "\n"+prompt+"\n"+"and give me the code for perticular file only";
-    }else{
-      fullPrompt =prompt;
+    } else if(clickedElement && clickedElement.length > 0) {
+      const elementDetails = clickedElement.map(el => el.outerHTML).join('\n');
+      fullPrompt = `Selected elements:\n${elementDetails}\n${prompt}\nPlease modify these elements`;
+    } else {
+      fullPrompt = prompt;
     }
   
     setActivePrompt(fullPrompt);
@@ -63,6 +69,7 @@ useEffect(()=>{
     setSelectedFileName('');
     setImgBase64('');
     setDraggedImage(null);
+    setClickedElement([]);
   };
 
   const handleFileSelect = (file) => {
@@ -468,7 +475,7 @@ useEffect(()=>{
    
 
 
-          <div className="relative bottom-0 w-[90%] m-auto  h-[40%] p-2 pt-0 relative rounded-lg border-[1px] border-gray-700 bg-[#141414] " >
+          <div className="relative bottom-0 w-[90%] m-auto  h-[40%] p-2 px-0 pt-0 relative rounded-lg border-[1px] border-gray-700 bg-[#141414] " >
     <svg class="_PromptEffectContainer_1nqq4_1"><defs><linearGradient id="line-gradient" x1="20%" y1="0%" x2="-14%" y2="10%" gradientUnits="userSpaceOnUse" gradientTransform="rotate(-45)"><stop offset="0%" stop-color="#1488fc" stop-opacity="0%"></stop><stop offset="40%" stop-color="#1488fc" stop-opacity="80%"></stop><stop offset="50%" stop-color="#1488fc" stop-opacity="80%"></stop><stop offset="100%" stop-color="#1488fc" stop-opacity="0%"></stop></linearGradient><linearGradient id="shine-gradient"><stop offset="0%" stop-color="white" stop-opacity="0%"></stop><stop offset="40%" stop-color="#8adaff" stop-opacity="80%"></stop><stop offset="50%" stop-color="#8adaff" stop-opacity="80%"></stop><stop offset="100%" stop-color="white" stop-opacity="0%"></stop></linearGradient></defs><rect class="_PromptEffectLine_1nqq4_10" pathLength="100" stroke-linecap="round"></rect><rect class="_PromptShine_1nqq4_22" x="48" y="24" width="70" height="1"></rect></svg>
     <div class="border-transparent" style={{height: "0px"}}><div class="overflow-hidden h-full border-bolt-elements-borderColor relative bg-bolt-elements-background-depth-2 transition-opacity duration-200 rounded-t-[0.44rem] border-b-px left-0 right-0 opacity-0"><div class="flex py-2.5 px-2.5 font-medium text-xs"><div class="flex justify-between items-center w-full"><div></div><button class="bg-transparent text-bolt-elements-link hover:underline">Clear</button></div></div></div></div>
     <div class="border-b-px border-transparent" style={{height: "0px"}}><div class="overflow-hidden h-full border-bolt-elements-borderColor relative bg-bolt-elements-background-depth-2 transition-opacity duration-200 rounded-t-[0.44rem] border-b-px left-0 right-0 opacity-0"><div class="flex text-xs py-1.5 px-2.5 font-medium"><div class="flex-grow"></div><button class="bg-transparent text-bolt-elements-link hover:underline">Update</button></div></div></div>
@@ -508,6 +515,20 @@ useEffect(()=>{
               }}
             />
           </div>
+        )}
+            {clickedElement && clickedElement.length > 0 && (
+          clickedElement.map((element,index)=>(
+          <div key={index} className="relative p-2 py-4  w-[100%] h-[20px] flex items-center justify-between mt-2 border-[1px] border-gray-700">
+            <p className="text-white text-xs bg-[#2BA6FF] pt-0.5 px-2 rounded-md">{element.tagName}</p>
+            <CloseIcon
+              className="w-2 h-2 cursor-pointer ml-1"
+              style={{color:"white",fontSize:"15px"}}
+              onClick={() => {
+                setClickedElement(clickedElement.filter(e => e !== element));
+              }}
+            />
+          </div>
+        ))
         )}
         <div className="relative">
         {isDraggingOver && (
