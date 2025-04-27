@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useQuery, gql, useLazyQuery, useSubscription } from '@apollo/client';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useQuery, gql, useLazyQuery, useSubscription, useMutation } from '@apollo/client';
 import FileExplorer from './FileExplorer';
 import logo from '../assets/onemorelogo.png';
 import parseXMLContent from './xmlParser';
@@ -23,6 +23,7 @@ import { createClient } from 'graphql-ws';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { inspectorScript } from './inspectorScript';
+import SessionRestorer from './SessionRestorer';
 
 const GET_TEMPLATE = gql`
   query GetTemplate($prompt: String!,$apiKey: String) {
@@ -53,14 +54,22 @@ const artifactStartRegex = /<boltArtifact\s+id="([^"]*)"\s+title="([^"]*)">/;
 // Alternative pattern if attributes might be in different order
 // const artifactStartRegex = /<boltArtifact\s+(?:id="([^"]*)"\s+title="([^"]*)")|(?:title="([^"]*)"\s+id="([^"]*)")/;
 
+// Add the mutation definition
+const SAVE_FILES = gql`
+  mutation SaveFiles($sessionId: String!, $files: [FileInput!]!, $title: String) {
+    saveFiles(sessionId: $sessionId, files: $files, title: $title)
+  }
+`;
+
 function Workspace() {
   const location = useLocation();
+  const { sessionIdParam } = useParams();
   const apiKey=localStorage.getItem('geminiApiKey');
   const [clickedElement,setClickedElement]=useState([]);
   console.log("apiKey omg",apiKey)
   const [mainTitle,setMainTitle]=useState("");
  
-  const { prompt, sessionId,firstPageImage } = location.state || { prompt: '', sessionId: '123',firstPageImage:'' };
+  const { prompt, sessionId,firstPageImage,oldSession } = location.state || { prompt: '', sessionId: '123',firstPageImage:'',oldSession:false };
   const [isInitializedServer, setIsInitializedServer] = useState(false);
   const [url, setUrl] = useState(null);
   const [tempUrl,setTempUrl]=useState(null);
@@ -125,19 +134,21 @@ function Workspace() {
   const [stepCounter, setStepCounter] = useState(1);
   // const [pendingDescriptionId, setPendingDescriptionId] = useState(null);
   const pendingDescriptionId=useRef(null);
+const [saveFiles] = useMutation(SAVE_FILES);
+
 
   // Use subscription to listen for AI responses
   const { error: subscriptionError } = useSubscription(AI_RESPONSE_SUBSCRIPTION, {
     variables: {
       prompt: messageSent ? activePrompt : '',
-      sessionId: sessionId,
+      sessionId: sessionIdParam?sessionIdParam:sessionId,
       messages: messageSent ? [] : messages,
       suggestions: '',
       image:messageSent?activeImage:firstPageImage,
       apiKey:apiKey
     },
     skip: (messageSent && !activePrompt)||!localStorage.getItem('token'),
-    onData: ({ data }) => {
+    onData: async ({ data }) => {
       if (data?.data?.aiResponse) {
         setIsLoadingApi(false);
         
@@ -398,8 +409,48 @@ setSteps(prevSteps => {
           setActivePrompt(null);
           pendingDescriptionId.current=null;
           xmlBufferRef.current='';
-        setMessageSent(true);
-        console.log("idhar chala mai udhar chala angad",messageSent,activePrompt)
+          setMessageSent(true);
+
+          // Save files after AI response is complete
+          const filesToSave = [];
+          const processFiles = async (path, files) => {
+            for (const [name, file] of Object.entries(files)) {
+              console.log(path,name,"path name everybody",filesToSave)
+              // if(!file.content){
+              //   continue;
+              // }
+              if(!path&&!name&&!file.content){
+                continue;
+              }
+              if (file.type === 'file') {
+                filesToSave.push({
+                  path: `${path}/${name}`,
+                  content: file.content,
+                  type: file.type
+                });
+              } else if (file.type === 'folder') {
+                await processFiles(`${path}/${name}`, file.children);
+              }
+            }
+          };
+
+          await processFiles('', files);
+          console.log(filesToSave,"filesToSave")
+
+          try {
+            const { data: saveData } =  saveFiles({
+              variables: {
+                sessionId:sessionIdParam?sessionIdParam:sessionId,
+                files: filesToSave,
+                title:mainTitle
+              }
+            });
+            console.log('Files saved successfully:', saveData);
+          } catch (error) {
+            console.error('Error saving files:', error);
+          }
+
+          console.log("idhar chala mai udhar chala angad",messageSent,activePrompt)
         }
       }
       else if (data?.data?.aiResponse === null) {
@@ -419,6 +470,44 @@ addStep({
         pendingDescriptionId.current=null;
         xmlBufferRef.current='';
       setMessageSent(true);
+
+      const filesToSave = [];
+      const processFiles = async (path, files) => {
+        for (const [name, file] of Object.entries(files)) {
+          console.log(path,name,"path name everybody",filesToSave)
+          if(!path&&!name&&!file.content){
+            continue;
+          }
+          // if(!file.content){
+          //   continue;
+          // }
+          if (file.type === 'file') {
+            filesToSave.push({
+              path: `${path}/${name}`,
+              content: file.content,
+              type: file.type
+            });
+          } else if (file.type === 'folder') {
+            await processFiles(`${path}/${name}`, file.children);
+          }
+        }
+      };
+
+      await processFiles('', files);
+      console.log(filesToSave,"filesToSave")
+
+      try {
+        const { data: saveData } =  saveFiles({
+          variables: {
+            sessionId: sessionId,
+            files: filesToSave,
+            title:mainTitle
+          }
+        });
+        console.log('Files saved successfully:', saveData);
+      } catch (error) {
+        console.error('Error saving files:', error);
+      }
       console.log("idhar chala mai udhar chala",messageSent,activePrompt)
       }
       
@@ -568,6 +657,10 @@ addStep({
       }
     }
   });
+
+  useEffect(()=>{
+    console.log(userPromptsList,promptId,steps,"userPromptsList and promptId changed");
+  },[files])
 
   const handleFileSelect = ({ name, path, content }) => {
     setSelectedFile({ name, path, content });
@@ -1166,6 +1259,7 @@ const walkDir = async (dirPath, rootPath = dirPath) => {
 };
 const NETLIFY_TOKEN = "nfp_TFPsA5ngqxkLSkQdRUWbTSveyd7vZjWL4b1f"
 
+
 const handleDeploy = async () => {
   try {
     setIsDeploying(true);
@@ -1291,9 +1385,10 @@ const handleDeploy = async () => {
     <div className="w-[100vw] flex h-screen bg-black ">
       {/* Steps Panel */}
       <div className="w-[100%] h-[10%] flex items-center justify-start p-2 pl-5" style={{color:'white',fontSize:"10px",backdropFilter:"blur(20px)",borderBottom:"1px solid #262626"}}>
-        <div className="flex items-center justify-between gap-2 w-[55%]"> 
+        <div className="flex items-center justify-between gap-2 w-[100%]"> 
           <img src={logo} alt="logo" className="w-[80px]  " />
          <p className=" p-2  rounded-full flex items-center gap-2 text-center text-lg font-bold">{mainTitle}</p>
+         <div className="flex items-center gap-2">
           <button
       style={{ fontSize: "10px", height: "80%", display: "flex", alignItems: "center" }}
       className={`px-4 py-1 rounded-full bg-black text-white`}
@@ -1309,6 +1404,9 @@ const handleDeploy = async () => {
     >
       {isDeploying ? 'Deploying...' : 'Deploy'}
     </button>
+    </div>
+
+
         </div>
         </div>
       <div className="w-[48%] min-w-[400px] h-[90%] absolute bottom-0 left-0 p-2 bg-[transparent] overflow-y-hidden scrollbar-hide">
@@ -1467,7 +1565,21 @@ const handleDeploy = async () => {
       {/* Terminal Panel */}
   
     </div>
-   
+   <SessionRestorer
+   sessionId={sessionId}
+   oldSession={oldSession}
+   sessionIdParam={sessionIdParam}
+   setFiles={setFiles}
+   webcontainer={webcontainer}
+   setPromptId={setPromptId}
+   setUserPromptsList={setUserPromptsList}
+   stepCounter={stepCounter}
+   setStepCounter={setStepCounter}
+   setSteps={setSteps}
+   setMessageSent={setMessageSent}
+   mainTitle={mainTitle}
+   setMainTitle={setMainTitle}
+   />
     </>
   );
 }

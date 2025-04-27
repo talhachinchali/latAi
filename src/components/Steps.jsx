@@ -38,9 +38,7 @@ useEffect(()=>{
     }
   }, [steps, activePrompt, isLoadingApi]); // Scroll when these values change
 
-  useEffect(() => {
-    console.log(imgBase64,"imgBase64");
-  }, [imgBase64]);
+ 
 
 
   const handleSubmit = () => {
@@ -140,10 +138,12 @@ useEffect(()=>{
         }
       }
       const promptId = step.promptId || 'undefined'; // Handle steps without promptId
+      // console.log(promptId,"promptId changedeeee");
       if (!groups[promptId]) {
         groups[promptId] = [];
       }
       groups[promptId].push(step);
+      // console.log(groups,"groups ebedy");
     });
     
     // Convert to array of objects sorted by promptId
@@ -323,7 +323,7 @@ useEffect(()=>{
               <div className='flex flex-col mb-2 gap-2 bg-[#262626] p-2 rounded-md w-[84%]'>
                 
      <div className="flex items-center gap-2 p-2 rounded-md">
-    <p className='text-xs text-white text-left capitalize'> {userPromptsList[group.promptId-1]}</p>
+    <p className='text-xs text-white text-left capitalize' style={{width:"100%",whiteSpace:'break-spaces',wordBreak:'break-word'}}> {userPromptsList[group.promptId-1]}</p>
    </div>
    </div>
    </div>
@@ -431,7 +431,7 @@ useEffect(()=>{
                  <div className='flex flex-col mb-2 gap-2 bg-[#262626] p-2 rounded-md w-[fit-content]'>
                    
         <div className="flex items-center gap-2 p-2 rounded-md">
-       <p className='text-xs text-white text-left capitalize'>{tempPrompt}</p>
+       <p className='text-xs text-white text-left capitalize' style={{width:"100%",whiteSpace:'break-spaces',wordBreak:'break-word'}}>{tempPrompt}</p>
       </div>
       </div>
       </div>

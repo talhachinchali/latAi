@@ -1,4 +1,14 @@
 function parseXMLContent(xmlContent) {
+  if (!xmlContent?.includes('<boltArtifact')) {
+    // Plain text: treat as a single description step
+    return [{
+      title: 'Description',
+      type: 'description',
+      path: '',
+      content: xmlContent?.trim() || '',
+      status: 'completed'
+    }];
+  }
     // Extract title from boltArtifact
     const titleMatch = xmlContent?.match(/title="([^"]*)"/)
     const title = titleMatch ? titleMatch[1] : ''
@@ -22,6 +32,7 @@ function parseXMLContent(xmlContent) {
       actions.push({
         title: `Create ${match[2]}`,
         type: match[1],
+        name: match[2],
         path: match[2],
         content: match[3].trim(),
         status: 'pending'
@@ -47,7 +58,8 @@ function parseXMLContent(xmlContent) {
         status: 'completed'
       })
     }
-  
+
+   
     return actions
   }
   

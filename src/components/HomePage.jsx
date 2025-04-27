@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import EastIcon from '@mui/icons-material/East';
 import linkedInLogo from '../assets/linkedInLogo.png';
-import { useMutation } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Avatar from '@mui/material/Avatar';
@@ -16,19 +16,24 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import logo from '../assets/onemorelogo.png';
-
-import { gql } from '@apollo/client';
 import { Skeleton } from '@mui/material';
+import { gql } from '@apollo/client';
 
- const LOGOUT_MUTATION = gql`
-  mutation logout {
-  logout
+// Add the query definition
+const GET_USER_CHAT_SESSIONS = gql`
+  query GetUserChatSessions {
+    getUserChatSessions {
+      sessionId
+      title
+      createdAt
+      updatedAt
+    }
   }
 `;
+
 function HomePage() {
   const [prompt, setPrompt] = useState('');
   const navigate = useNavigate();
-  const [logout] = useMutation(LOGOUT_MUTATION);
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const user = JSON.parse(localStorage.getItem('user'));
@@ -43,6 +48,11 @@ function HomePage() {
   const [geminiApiKey, setGeminiApiKey] = useState(localStorage.getItem('geminiApiKey') || '');
   const [tempApiKey, setTempApiKey] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+
+  const { data: sessionsData, loading: sessionsLoading } = useQuery(GET_USER_CHAT_SESSIONS, {
+    skip: !localStorage.getItem('token'),
+    fetchPolicy: 'network-only'
+  });
 
   // Modal handlers
   const handleOpenApiKeyModal = () => {
@@ -371,6 +381,41 @@ function HomePage() {
       
        <h1 className='text-white text-5xl font-bold'>What do you want to build?</h1>
        <p className='text-[#A3A3A3] mt-2 text-lg'>Prompt, run, edit full-stack <span className='text-white'>web</span> apps.</p>
+        {/* Add Recent Sessions section */}
+        {user && (
+          <div className="mt-8 max-w-xl mx-auto">
+            <h2 className="text-white text-xl font-semibold mb-4">Recent Sessions</h2>
+            {sessionsLoading ? (
+              <div className="space-y-2">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} variant="rectangular" height={60} sx={{ bgcolor: 'rgba(255, 255, 255, 0.1)' }} />
+                ))}
+              </div>
+            ) : sessionsData?.getUserChatSessions?.length > 0 ? (
+              <div className="space-y-2">
+                {sessionsData.getUserChatSessions.map((session) => (
+                  <div 
+                    key={session.sessionId}
+                    className="bg-[#1e1e1e] p-4 rounded-lg border border-gray-700 hover:border-blue-500 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/workspace/${session.sessionId}`)}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-white text-sm">Session ID: {session.title}</p>
+                        <p className="text-gray-400 text-xs">
+                          Created: {new Date(Number(session?.createdAt)).toLocaleString()}
+                        </p>
+                      </div>
+                      <EastIcon className="text-gray-400" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-400 text-sm">No recent sessions found</p>
+            )}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className='mt-5 max-w-xl mx-auto mb-5'>
         <div className="relative bottom-0 w-[100%]  h-[40%] p-2 pt-0 relative rounded-lg border-[1px] border-gray-700 bg-[#141414] " >
     <svg class="_PromptEffectContainer_1nqq4_1"><defs><linearGradient id="line-gradient" x1="20%" y1="0%" x2="-14%" y2="10%" gradientUnits="userSpaceOnUse" gradientTransform="rotate(-45)"><stop offset="0%" stop-color="#1488fc" stop-opacity="0%"></stop><stop offset="40%" stop-color="#1488fc" stop-opacity="80%"></stop><stop offset="50%" stop-color="#1488fc" stop-opacity="80%"></stop><stop offset="100%" stop-color="#1488fc" stop-opacity="0%"></stop></linearGradient><linearGradient id="shine-gradient"><stop offset="0%" stop-color="white" stop-opacity="0%"></stop><stop offset="40%" stop-color="#8adaff" stop-opacity="80%"></stop><stop offset="50%" stop-color="#8adaff" stop-opacity="80%"></stop><stop offset="100%" stop-color="white" stop-opacity="0%"></stop></linearGradient></defs><rect class="_PromptEffectLine_1nqq4_10" pathLength="100" stroke-linecap="round"></rect><rect class="_PromptShine_1nqq4_22" x="48" y="24" width="70" height="1"></rect></svg>

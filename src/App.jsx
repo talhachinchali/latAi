@@ -15,6 +15,7 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/workspace" element={<Workspace />} />
+          <Route path="/workspace/:sessionIdParam" element={<Workspace />} />
           <Route path="/auth/google/callback" element={<GoogleAuth client={client} />} />
         </Routes>
       </Router>
