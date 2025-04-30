@@ -1401,7 +1401,7 @@ const handleDeploy = async () => {
       Export Project
       <DownloadIcon style={{fontSize:"20px",marginLeft:"5px"}}/>
     </Button>
-    <Button
+    {/* <Button
     variant="contained"
       style={{ fontSize: "12px", height: "80%", display: "flex", alignItems: "center",textTransform:"capitalize" }}
       className={`px-4 py-1 rounded-full bg-black text-white ${isDeploying ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -1410,7 +1410,7 @@ const handleDeploy = async () => {
     >
       {isDeploying ? 'Deploying...' : 'Deploy'}
       <RocketLaunchIcon style={{fontSize:"20px",marginLeft:"5px"}}/>
-    </Button>
+    </Button> */}
     </div>
 
 

@@ -374,7 +374,7 @@ function HomePage() {
           borderRadius:'5px',
           border:'1px solid #3b3b3b'
         }}>
-          <p className='text-white text-sm  '>Projects</p>
+          {/* <p className='text-white text-sm  '>Projects</p> */}
  <ChevronRightIcon style={{color:'white',fontSize:'30px'}}/>
 
  </div>
