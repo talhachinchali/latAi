@@ -6,6 +6,8 @@ import logo from '../assets/onemorelogo.png';
 import parseXMLContent from './xmlParser';
 import { KeyboardArrowRight } from '@mui/icons-material';
 import { KeyboardArrowLeft } from '@mui/icons-material';
+import DownloadIcon from '@mui/icons-material/Download';
+import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import TerminalIcon from '@mui/icons-material/Terminal';
 import Editor from "@monaco-editor/react";
 import { WebContainer } from '@webcontainer/api';
@@ -16,6 +18,7 @@ import { useMonaco } from "@monaco-editor/react";
 import { X } from '@mui/icons-material';
 import TerminalComponent from './Terminal';
 import SplitPane from 'react-split-pane';
+import { Button } from '@mui/material';
 import Steps from './Steps';
 import "./Steps.css"
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
@@ -1389,21 +1392,25 @@ const handleDeploy = async () => {
           <img src={logo} alt="logo" className="w-[80px]  " />
          <p className=" p-2  rounded-full flex items-center gap-2 text-center text-lg font-bold">{mainTitle}</p>
          <div className="flex items-center gap-2">
-          <button
-      style={{ fontSize: "10px", height: "80%", display: "flex", alignItems: "center" }}
-      className={`px-4 py-1 rounded-full bg-black text-white`}
+          <Button
+          variant="contained"
+      style={{ fontSize: "12px",  display: "flex", alignItems: "center",textTransform:"capitalize",background:'#3b3b3b' }}
+      className={`px-4 py-1  bg-black text-white capitalize `}
       onClick={exportProject}
     >
       Export Project
-    </button>
-    <button
-      style={{ fontSize: "10px", height: "80%", display: "flex", alignItems: "center" }}
+      <DownloadIcon style={{fontSize:"20px",marginLeft:"5px"}}/>
+    </Button>
+    <Button
+    variant="contained"
+      style={{ fontSize: "12px", height: "80%", display: "flex", alignItems: "center",textTransform:"capitalize" }}
       className={`px-4 py-1 rounded-full bg-black text-white ${isDeploying ? 'opacity-50 cursor-not-allowed' : ''}`}
       onClick={handleDeploy}
       disabled={isDeploying}
     >
       {isDeploying ? 'Deploying...' : 'Deploy'}
-    </button>
+      <RocketLaunchIcon style={{fontSize:"20px",marginLeft:"5px"}}/>
+    </Button>
     </div>
 
 

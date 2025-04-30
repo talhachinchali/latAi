@@ -4,6 +4,7 @@ import AttachFileIcon from '@mui/icons-material/AttachFile';
 import EastIcon from '@mui/icons-material/East';
 import linkedInLogo from '../assets/linkedInLogo.png';
 import { useMutation, useQuery } from '@apollo/client';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Avatar from '@mui/material/Avatar';
@@ -17,19 +18,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import logo from '../assets/onemorelogo.png';
 import { Skeleton } from '@mui/material';
-import { gql } from '@apollo/client';
+import Sidebar from './Sidebar';
 
-// Add the query definition
-const GET_USER_CHAT_SESSIONS = gql`
-  query GetUserChatSessions {
-    getUserChatSessions {
-      sessionId
-      title
-      createdAt
-      updatedAt
-    }
-  }
-`;
 
 function HomePage() {
   const [prompt, setPrompt] = useState('');
@@ -42,6 +32,7 @@ function HomePage() {
   const [draggedImage, setDraggedImage] = useState(null);
   const [imgBase64, setImgBase64] = useState('');
   const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   
   // Gemini API key state and modal controls
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
@@ -49,10 +40,8 @@ function HomePage() {
   const [tempApiKey, setTempApiKey] = useState('');
   const [isEditing, setIsEditing] = useState(false);
 
-  const { data: sessionsData, loading: sessionsLoading } = useQuery(GET_USER_CHAT_SESSIONS, {
-    skip: !localStorage.getItem('token'),
-    fetchPolicy: 'network-only'
-  });
+
+ 
 
   // Modal handlers
   const handleOpenApiKeyModal = () => {
@@ -375,47 +364,30 @@ function HomePage() {
       </div>
       
       </div>
+      <div style={{width:'5%',backgroundColor:'transparent',height:'100vh',position:'absolute',left:0,top:0,zIndex:2}}
+      onMouseEnter={()=>setIsOpen(true)}
+      onMouseLeave={()=>setIsOpen(false)}
+      >
+        <div className='flex justify-center items-center gap-0'
+        style={{color:'white',position:'absolute',left:'10px',bottom:'10px',zIndex:2,
+          padding:'5px',
+          borderRadius:'5px',
+          border:'1px solid #3b3b3b'
+        }}>
+          <p className='text-white text-sm  '>Projects</p>
+ <ChevronRightIcon style={{color:'white',fontSize:'30px'}}/>
+
+ </div>
+      <Sidebar isOpen={isOpen} setIsOpen={setIsOpen} />
+      </div>
+
     <div className="min-h-screen w-screen flex items-center justify-center bg-black relative">
        <div style={{backgroundColor:"black"}} class="_RayContainer_1ti3k_1" data-theme="dark" data-chat-started="true"><div class="_LightRay_1ti3k_23 _RayOne_1ti3k_28"></div><div class="_LightRay_1ti3k_23 _RayTwo_1ti3k_36"></div><div class="_LightRay_1ti3k_23 _RayThree_1ti3k_46"></div><div class="_LightRay_1ti3k_23 _RayFour_1ti3k_55"></div><div class="_LightRay_1ti3k_23 _RayFive_1ti3k_65"></div></div>
       <div className="p-0 bg-[transparent] rounded-lg shadow-md w-screen  relative">
       
        <h1 className='text-white text-5xl font-bold'>What do you want to build?</h1>
        <p className='text-[#A3A3A3] mt-2 text-lg'>Prompt, run, edit full-stack <span className='text-white'>web</span> apps.</p>
-        {/* Add Recent Sessions section */}
-        {user && (
-          <div className="mt-8 max-w-xl mx-auto">
-            <h2 className="text-white text-xl font-semibold mb-4">Recent Sessions</h2>
-            {sessionsLoading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} variant="rectangular" height={60} sx={{ bgcolor: 'rgba(255, 255, 255, 0.1)' }} />
-                ))}
-              </div>
-            ) : sessionsData?.getUserChatSessions?.length > 0 ? (
-              <div className="space-y-2">
-                {sessionsData.getUserChatSessions.map((session) => (
-                  <div 
-                    key={session.sessionId}
-                    className="bg-[#1e1e1e] p-4 rounded-lg border border-gray-700 hover:border-blue-500 transition-colors cursor-pointer"
-                    onClick={() => navigate(`/workspace/${session.sessionId}`)}
-                  >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-white text-sm">Session ID: {session.title}</p>
-                        <p className="text-gray-400 text-xs">
-                          Created: {new Date(Number(session?.createdAt)).toLocaleString()}
-                        </p>
-                      </div>
-                      <EastIcon className="text-gray-400" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-400 text-sm">No recent sessions found</p>
-            )}
-          </div>
-        )}
+    
         <form onSubmit={handleSubmit} className='mt-5 max-w-xl mx-auto mb-5'>
         <div className="relative bottom-0 w-[100%]  h-[40%] p-2 pt-0 relative rounded-lg border-[1px] border-gray-700 bg-[#141414] " >
     <svg class="_PromptEffectContainer_1nqq4_1"><defs><linearGradient id="line-gradient" x1="20%" y1="0%" x2="-14%" y2="10%" gradientUnits="userSpaceOnUse" gradientTransform="rotate(-45)"><stop offset="0%" stop-color="#1488fc" stop-opacity="0%"></stop><stop offset="40%" stop-color="#1488fc" stop-opacity="80%"></stop><stop offset="50%" stop-color="#1488fc" stop-opacity="80%"></stop><stop offset="100%" stop-color="#1488fc" stop-opacity="0%"></stop></linearGradient><linearGradient id="shine-gradient"><stop offset="0%" stop-color="white" stop-opacity="0%"></stop><stop offset="40%" stop-color="#8adaff" stop-opacity="80%"></stop><stop offset="50%" stop-color="#8adaff" stop-opacity="80%"></stop><stop offset="100%" stop-color="white" stop-opacity="0%"></stop></linearGradient></defs><rect class="_PromptEffectLine_1nqq4_10" pathLength="100" stroke-linecap="round"></rect><rect class="_PromptShine_1nqq4_22" x="48" y="24" width="70" height="1"></rect></svg>

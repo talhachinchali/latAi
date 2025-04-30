@@ -26,8 +26,11 @@ const httpLink = new HttpLink({
 // Create a WebSocket link for subscriptions using graphql-ws
 const wsLink = new GraphQLWsLink(createClient({
   url: import.meta.env.VITE_BACKEND_WS_URL,
-  connectionParams: {
-    authorization: `Bearer ${localStorage.getItem('token')}`
+  connectionParams: () => {
+    const token = localStorage.getItem('token');
+    return {
+      authorization: token ? `Bearer ${token}` : ""
+    };
   }
 }));
 
