@@ -502,7 +502,7 @@ addStep({
       try {
         const { data: saveData } =  saveFiles({
           variables: {
-            sessionId: sessionId,
+            sessionId: sessionIdParam?sessionIdParam:sessionId,
             files: filesToSave,
             title:mainTitle
           }
